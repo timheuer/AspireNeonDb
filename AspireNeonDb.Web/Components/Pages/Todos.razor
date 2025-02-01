@@ -1,0 +1,49 @@
+﻿@page "/todos"
+@attribute [StreamRendering(true)]
+@attribute [OutputCache(Duration = 5)]
+
+@inject WeatherApiClient WeatherApi
+
+<PageTitle>Todos</PageTitle>
+
+<h1>Todos</h1>
+
+<p>A list of todos</p>
+
+@if (todos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Is Complete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var todo in todos)
+            {
+                <tr>
+                    <td>@todo.Id</td>
+                    <td>@todo.Title</td>
+                    <td>
+                        <input type="checkbox" checked="@todo.IsComplete" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private Todo[]? todos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        todos = await WeatherApi.GetTodosAsync();
+    }
+}
