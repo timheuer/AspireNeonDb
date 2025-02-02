@@ -1,16 +1,13 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgres")
-    .WithPgAdmin(c => c.WithImageTag("8.14"))
     .WithPgWeb()
     .WithBindMount("data/postgres", "/docker-entrypoint-initdb.d")
     .WithEnvironment("POSTGRES_DB","Todos");
 
 var pgdb = postgres.AddDatabase("postgresdb", "Todos");
 
-var neon = builder.AddContainer("neon", "timowilhelm/local-neon-http-proxy")
-    .WithImageRegistry("ghcr.io")
-    .WithImageTag("main")
+var neon = builder.AddNeon("neon", userName:postgres.Resource.UserNameParameter, password:postgres.Resource.PasswordParameter)
     .WaitFor(postgres)
     .WithEnvironment(config =>
     {
@@ -18,11 +15,14 @@ var neon = builder.AddContainer("neon", "timowilhelm/local-neon-http-proxy")
         var port = postgres.Resource.PrimaryEndpoint.Port;
         var password = postgres.Resource.PasswordParameter.Value;
         var dbname = pgdb.Resource.DatabaseName;
-        var cnstr = $"postgres://postgres:{password}@{hostname}:{port}/{dbname}";
+        var cnstr = $"postgresql://postgres:{password}@{hostname}:{port}/{dbname}";
         config.EnvironmentVariables.Add("PG_CONNECTION_STRING", cnstr);
-    });
+    }); //https://neon.tech/guides/local-development-with-neon
+
+var neondb = neon.AddDatabase("neondb", "Todos");
 
 var apiService = builder.AddProject<Projects.AspireNeonDb_ApiService>("apiservice")
+    .WithReference(neondb)
     .WithReference(pgdb);
 
 builder.AddProject<Projects.AspireNeonDb_Web>("webfrontend")

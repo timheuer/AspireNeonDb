@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
-builder.AddNpgsqlDataSource("postgresdb");
+builder.AddNpgsqlDataSource("neondb");
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
